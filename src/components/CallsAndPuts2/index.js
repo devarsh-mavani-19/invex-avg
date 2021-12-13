@@ -10,6 +10,7 @@ function Index () {
   const [loading, setLoading] = useState(false)
 
   const getData = async () => {
+    setLoading(true)
     const res = await fetch(`http://dharm.ga/hello/total`, {
       method: 'POST',
       body: `{
@@ -25,6 +26,7 @@ function Index () {
     json = json.replace(/\bNaN\b/g, null)
     json = json.replace(/\bInfinity\b/g, null)
     setCompanies(JSON.parse(json))
+    setLoading(false)
   }
 
   const handleExpiration = e => {

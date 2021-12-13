@@ -72,8 +72,6 @@ function Index2 () {
         }
       })
     })
-    console.log(op)
-
     setCompanies(op)
     setLoading(false)
   }
