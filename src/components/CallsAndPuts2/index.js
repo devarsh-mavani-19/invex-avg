@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, ReactPortal } from 'react'
+import { createPortal } from 'react-dom'
 import { Accordion, useAccordionButton } from 'react-bootstrap'
 import './styles.css'
 
@@ -6,6 +7,7 @@ function Index () {
   const [monthInput, setMonthInput] = useState(100)
   const [strikeInput, setStrikeInput] = useState(10)
   const [companies, setCompanies] = useState({})
+  const [loading, setLoading] = useState(false)
 
   const getData = async () => {
     const res = await fetch(`http://dharm.ga/hello/total`, {
@@ -53,6 +55,16 @@ function Index () {
         <div className='container'>
           <div className='row'>
             <div className='col-12'>
+              {loading
+                ? createPortal(
+                    <div class='backdrop d-flex justify-content-center align-items-center'>
+                      <div class='spinner-border text-primary' role='status'>
+                        <span class='visually-hidden'>Loading...</span>
+                      </div>
+                    </div>,
+                    document.getElementById('loading_modal')
+                  )
+                : null}
               <div className='d-flex flex-row justify-content-between'>
                 <div className='card d-flex flex-row justify-content-between align-items-center'>
                   <p className='my-auto mx-2'>Expiration</p>
@@ -65,15 +77,20 @@ function Index () {
                 </div>
                 <div className='card d-flex flex-row justify-content-between align-items-center'>
                   <p className='my-auto mx-2'>Strike</p>
-                  <input
-                    type='range'
-                    id='myinput'
-                    className='mx-2 form-range '
-                    value={strikeInput}
-                    onChange={handleStrikeChange}
-                    min={1}
-                    max={100}
-                  />
+                  <div class='d-flex flex-column align-items-start'>
+                    <label for='myinputRange' class='form-label mx-2 my-0 mt-2'>
+                      {strikeInput}
+                    </label>
+                    <input
+                      type='range'
+                      id='myinputRange'
+                      className='mx-2 form-range '
+                      value={strikeInput}
+                      onChange={handleStrikeChange}
+                      min={1}
+                      max={100}
+                    />
+                  </div>
                 </div>
                 <div className='card d-flex flex-row justify-content-between align-items-center'>
                   <p className='my-auto mx-2'>Data Date</p>

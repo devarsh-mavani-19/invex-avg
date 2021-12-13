@@ -1840,3 +1840,15 @@ small > .circle {
   transition: background 450ms ease-in;
   -webkit-appearance: none;
 }
+
+
+.backdrop {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 20;
+  background-color: white;
+  transform: translate(-50%, -50%);
+  width: 100vw;
+  height: 100vh;
+}
