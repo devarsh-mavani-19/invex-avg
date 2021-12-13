@@ -1,0 +1,26 @@
+.custom-range {
+    width: 'auto';
+    margin-top: 20px;
+}
+
+.custom-range progress {
+    width: 220px;
+    height: 10px;
+    color: lightblue;
+    background: #13A41B;
+}
+
+.custom-range progress::-moz-progress-bar {
+background: #EFEFEF;
+
+}
+  
+.custom-range progress::-webkit-progress-value {
+background: #13A41B;
+
+}
+  
+.custom-range progress::-webkit-progress-bar {
+background: #EFEFEF;
+
+}

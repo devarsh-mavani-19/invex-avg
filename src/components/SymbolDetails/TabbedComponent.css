@@ -1,0 +1,28 @@
+.tab {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.tab__item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: small;
+    padding: 6px 20px;
+    width: 35px;
+    height: 25px;
+    background: #F8F8F8;
+    border: none;
+    border-radius: 20px;
+    outline: none;
+    color: black;
+}
+
+.tab__item.active {
+    padding: 6px 20px;
+    color: white;
+    width: 35px;
+    height: 25px;
+    background: #3751FF;
+    border-radius: 30px;
+}
