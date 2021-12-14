@@ -1852,3 +1852,12 @@ small > .circle {
   width: 100vw;
   height: 100vh;
 }
+
+.my_button {
+  background-color: #0F062B;
+  color: white;
+  border: none;
+  outline: none;
+  padding: 8px;
+  border-radius: 4px;
+}
