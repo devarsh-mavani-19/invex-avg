@@ -246,11 +246,10 @@ function Index2 () {
             </div>
             <div className='col-12'>
               <div
-                className='flex-wrap d-flex flex-row justify-content-between my-2'
+                className='card flex-wrap d-flex flex-row justify-content-between my-2'
                 style={{ overflow: 'auto' }}
               >
                 <div class=' card d-flex flex-row flex-wrap align-items-center justify-content-between w-100 p-4'>
-                  {/* <div className='my-2 card d-flex flex-row justify-content-center align-items-center'> */}
                   <p className='my-auto fw-bolder'>Expiration</p>
                   <input
                     type='number'
@@ -298,6 +297,16 @@ function Index2 () {
                     className='mx-2 form-control my-auto w-auto'
                     value={date}
                   />
+                </div>
+              </div>
+
+              <div
+                className='flex-wrap d-flex flex-row justify-content-between my-2 card'
+                style={{ overflow: 'auto' }}
+              >
+                <div class=' card d-flex flex-row flex-wrap align-items-center justify-content-between w-100 p-4'>
+                  {/* <div className='my-2 card d-flex flex-row justify-content-center align-items-center'> */}
+
                   {/* </div> */}
 
                   <Box sx={{ width: 150 }} className='mx-2'>
