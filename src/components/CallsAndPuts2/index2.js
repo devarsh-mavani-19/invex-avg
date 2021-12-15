@@ -9,6 +9,7 @@ import MUIDataTable from 'mui-datatables'
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles'
 import { Slider } from '@mui/material'
 import { Link } from 'react-router-dom'
+import { Box, Modal, Typography } from '@material-ui/core'
 
 const useStyles = makeStyles({
   root: {
@@ -53,6 +54,17 @@ const options = {
   filterType: 'none'
 }
 
+const style = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4
+}
+
 function Index2 () {
   const classes = useStyles()
 
@@ -65,18 +77,51 @@ function Index2 () {
   const [strikeInput, setStrikeInput] = useState(10)
   const [companies, setCompanies] = useState([])
   const [loading, setLoading] = useState(false)
-  const [data, setData] = useState([])
+  const [showMoreDetails, setShowMoreDetails] = useState({
+    show: false,
+    data: {}
+  })
+  const [callRange, setCallRange] = useState([0.5, 20])
+  const [putRange, setputRange] = useState([0.5, 50])
+  const [CPRange, setCPRange] = useState([0.5, 20])
+
+  const handleShowMore = (key, value) => {
+    setShowMoreDetails({ show: true, data: { key: key, value: { ...value } } })
+    console.log(showMoreDetails)
+  }
+
+  const handleCallRangeChange = (e, value) => {
+    setCallRange(value)
+  }
+  const handlePutRangeChange = (e, value) => {
+    setputRange(value)
+  }
+  const handleCPRangeChange = (e, value) => {
+    setCPRange(value)
+  }
+
+  const handleCloseModal = () => {
+    setShowMoreDetails({
+      show: false,
+      data: {}
+    })
+  }
 
   const getData = async () => {
     try {
       setLoading(true)
       const res = await fetch(`http://dharm.ga/hello/total`, {
         method: 'POST',
-        body: `{
+        body: `
+        {
           "month":"${monthInput}",
           "strike_percent":"${strikeInput}",
-          "date":"2021-11-23"
+          "date":"2021-11-23",
+          "call_value":"${callRange[0]}_${callRange[1]}",
+          "put_value":"${putRange[0]}_${putRange[1]}",
+          "cp_value":"${CPRange[0]}_${CPRange[1]}"
       }`,
+
         headers: {
           'Content-Type': 'application/json'
         }
@@ -88,14 +133,24 @@ function Index2 () {
       let jsonOP = JSON.parse(json)
       let op = []
       Object.entries(jsonOP).map(([key, value]) => {
-        return Object.entries(value).map(([key2, value2]) => {
-          op.push({
-            company_name: key + ' ' + key2,
-            call_ir: value2[0] ? value2[0].toFixed(2) : '-',
-            put_ir: value2[1] ? value2[1].toFixed(2) : '-',
-            cp_ratio: value2[2] ? value2[2].toFixed(2) : '-'
-          })
+        let value2 = value['total']
+        op.push({
+          company_name: (
+            <div
+              onClick={() => {
+                handleShowMore(key, value)
+              }}
+              style={{ cursor: 'pointer', color: 'blue' }}
+            >
+              {' '}
+              {key}{' '}
+            </div>
+          ),
+          call_ir: value2[0] ? value2[0].toFixed(2) : '-',
+          put_ir: value2[1] ? value2[1].toFixed(2) : '-',
+          cp_ratio: value2[2] ? value2[2].toFixed(2) : '-'
         })
+        return ''
       })
       setCompanies(op)
       setLoading(false)
@@ -131,6 +186,55 @@ function Index2 () {
       <section className='company_details'>
         <div className='container'>
           <div className='row'>
+            {showMoreDetails.show
+              ? createPortal(
+                  <Modal
+                    open={showMoreDetails.show}
+                    aria-labelledby='modal-modal-title'
+                    aria-describedby='modal-modal-description'
+                  >
+                    <Box sx={{ ...style, width: 800 }}>
+                      <div class='text-end' style={{ cursor: 'pointer' }}>
+                        <i class='fas fa-times' onClick={handleCloseModal}></i>
+                      </div>
+                      <Typography
+                        id='modal-modal-title'
+                        variant='h6'
+                        component='h2'
+                      >
+                        {`${showMoreDetails.data['key']}`}
+                      </Typography>
+                      <div class='table-responsive shadow-lg p-3 my-3'>
+                        <table class='table'>
+                          <thead>
+                            <tr>
+                              <td scope='col'>Company Name</td>
+                              <td scope='col'>Call IR</td>
+                              <td scope='col'>Put IR</td>
+                              <td scope='col'>CP Ratio</td>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(showMoreDetails.data['value']).map(
+                              ([key, value]) => {
+                                return (
+                                  <tr>
+                                    <td>{key}</td>
+                                    <td>{value[0].toFixed(6)}</td>
+                                    <td>{value[1].toFixed(6)}</td>
+                                    <td>{value[2].toFixed(6)}</td>
+                                  </tr>
+                                )
+                              }
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Box>
+                  </Modal>,
+                  document.getElementById('loading_modal')
+                )
+              : null}
             <div class='col-12'>
               <Link
                 to={{
@@ -195,6 +299,51 @@ function Index2 () {
                     value={date}
                   />
                   {/* </div> */}
+
+                  <Box sx={{ width: 150 }} className='mx-2'>
+                    <p className='my-auto mx-2 fw-bolder'>Call Range</p>
+                    <Slider
+                      getAriaLabel={() => 'Minimum distance'}
+                      step={0.5}
+                      value={callRange}
+                      sx={{
+                        color: '#0f062b'
+                      }}
+                      valueLabelDisplay='auto'
+                      onChange={handleCallRangeChange}
+                      disableSwap
+                    />
+                  </Box>
+
+                  <Box sx={{ width: 150 }} className='mx-2'>
+                    <p className='my-auto mx-2 fw-bolder'>Put Range</p>
+                    <Slider
+                      getAriaLabel={() => 'Minimum distance'}
+                      step={0.5}
+                      value={putRange}
+                      sx={{
+                        color: '#0f062b'
+                      }}
+                      valueLabelDisplay='auto'
+                      onChange={handlePutRangeChange}
+                      disableSwap
+                    />
+                  </Box>
+
+                  <Box sx={{ width: 150 }} className='mx-2'>
+                    <p className='my-auto mx-2 fw-bolder'>CP Range</p>
+                    <Slider
+                      getAriaLabel={() => 'Minimum distance'}
+                      step={0.5}
+                      value={CPRange}
+                      sx={{
+                        color: '#0f062b'
+                      }}
+                      valueLabelDisplay='auto'
+                      onChange={handleCPRangeChange}
+                      disableSwap
+                    />
+                  </Box>
 
                   {/* <div className='my-2 d-flex flex-row justify-content-between align-items-center mx-2'> */}
                   <button

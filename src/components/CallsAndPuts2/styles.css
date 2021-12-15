@@ -1844,13 +1844,14 @@ small > .circle {
 
 .backdrop {
   position: fixed;
+  translate: 99;
   top: 50%;
   left: 50%;
-  z-index: 20;
-  background-color: white;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 255);
   transform: translate(-50%, -50%);
-  width: 100vw;
-  height: 100vh;
+  width: 50vw;
+  height: 50vh;
 }
 
 .my_button {
