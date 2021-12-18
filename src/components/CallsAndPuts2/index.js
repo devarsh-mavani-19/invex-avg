@@ -1,291 +1,138 @@
+import { makeStyles, ThemeProvider } from '@mui/styles'
+
+import { createTheme, responsiveFontSizes } from '@mui/material/styles'
 import React, { useEffect, useState, ReactPortal } from 'react'
 import { createPortal } from 'react-dom'
 import { Accordion, useAccordionButton } from 'react-bootstrap'
 import './styles.css'
-import { Link } from 'react-router-dom'
 import MUIDataTable from 'mui-datatables'
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles'
-import { Slider } from '@mui/material'
-import { makeStyles, ThemeProvider } from '@mui/styles'
+import { Slider, Tooltip } from '@mui/material'
+import { Link } from 'react-router-dom'
+import { Box, Modal, Typography } from '@material-ui/core'
+import MainTable from './MainTable'
+import Controls from './Controls'
+import MoreInfo from './MoreInfo'
 
-const useStyles = makeStyles({
-  root: {
-    width: 250
-  },
-  sliderColor: {
-    color: 'red'
-  }
-})
+const columns = [
+  { name: 'company_name', label: 'Company name' },
+  { name: 'call_ir', label: 'Call IR' },
+  { name: 'put_ir', label: 'Put IR' },
+  { name: 'cp_ratio', label: 'CP ratio' },
+  { name: 'hvtf', label: 'HVTF' },
+  { name: 'action', label: 'See More' }
+]
 
-const muiTheme = createMuiTheme({
-  overrides: {
-    MuiSlider: {
-      thumb: {
-        color: 'yellow'
-      },
-      track: {
-        color: 'red'
-      },
-      rail: {
-        color: 'black'
-      }
-    }
-  }
-})
+// const data = [
+//   ['Joe James', 'Test Corp', 'Yonkers', 'NY'],
+//   ['John Walsh', 'Test Corp', 'Hartford', 'CT'],
+//   ['Bob Herm', 'Test Corp', 'Tampa', 'FL'],
+//   ['James Houston', 'Test Corp', 'Dallas', 'TX']
+// ]
+
+const options = {
+  filterType: 'none'
+}
 
 function Index () {
-  const [monthInput, setMonthInput] = useState(100)
-  const [strikeInput, setStrikeInput] = useState(10)
-  const [companies, setCompanies] = useState({})
+  const [companies, setCompanies] = useState([])
+  const [isDataLoaded, setDataLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [date, setDate] = useState(new Date().toISOString().substring(0, 10))
+  const [showMoreDetails, setShowMoreDetails] = useState({
+    show: false,
+    data: {}
+  })
 
-  const getData = async () => {
-    setLoading(true)
-    const res = await fetch(`http://dharm.ga/hello/total`, {
-      method: 'POST',
-      body: `{
-        "month":"${monthInput}",
-        "strike_percent":"${strikeInput}",
-        "date":"2021-11-23"
-    }`,
-      headers: {
-        'Content-Type': 'application/json'
-      }
+  const handleShowMore = (key, value) => {
+    setShowMoreDetails({ show: true, data: { key: key, value: { ...value } } })
+  }
+
+  const handleCloseModal = () => {
+    setShowMoreDetails({
+      show: false,
+      data: {}
     })
-    let json = await res.text()
-    json = json.replace(/\bNaN\b/g, null)
-    json = json.replace(/\bInfinity\b/g, null)
-    setCompanies(JSON.parse(json))
-    setLoading(false)
   }
 
-  const handleExpiration = e => {
-    setMonthInput(e.target.value)
+  const handleSubmit = body => {
+    getData(body)
   }
 
-  const handleStrikeChange = e => {
-    setStrikeInput(e.target.value)
+  const getData = async body => {
+    try {
+      setLoading(true)
+      setDataLoaded(true)
+
+      const res = await fetch(`https://dharm.ga/hello/total`, {
+        method: 'POST',
+        body: body,
+
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      console.log(body)
+      let json = await res.text()
+      json = json.replace(/\bNaN\b/g, null)
+      json = json.replace(/\bInfinity\b/g, null)
+      console.log('Output: ', json)
+      let jsonOP = JSON.parse(json)
+      let op = []
+      Object.entries(jsonOP).map(([key, value]) => {
+        let value2 = value['total']
+        op.push({
+          company_name: key,
+          call_ir: value2[0] ? Number(value2[0].toFixed(2)) : '-',
+          put_ir: value2[1] ? Number(value2[1].toFixed(2)) : '-',
+          cp_ratio: value2[2] ? Number(value2[2].toFixed(2)) : '-',
+          hvtf: value2[3] ? Number(value2[3].toFixed(2)) : '-',
+          action: (
+            <button
+              class='btn btn-outline-success'
+              onClick={() => {
+                handleShowMore(key, value)
+              }}
+            >
+              <i class='fa fa-arrow-right' aria-hidden='true'></i>
+            </button>
+          )
+        })
+        return ''
+      })
+      setCompanies(op)
+    } catch (e) {
+      console.log(e)
+    } finally {
+      setLoading(false)
+    }
   }
-
-  const handleSubmit = () => {
-    getData()
-  }
-
-  const CustomToggle = ({ children, eventKey }) => {
-    const decoratedOnClick = useAccordionButton(eventKey, () => {})
-
-    return <span onClick={decoratedOnClick}>{children}</span>
-  }
-
-  useEffect(() => {
-    getData()
-  }, [])
 
   return (
     <div className='main'>
       <section className='company_details'>
         <div className='container'>
           <div className='row'>
+            {showMoreDetails.show
+              ? createPortal(
+                  <MoreInfo
+                    showMoreDetails={showMoreDetails}
+                    handleCloseModal={handleCloseModal}
+                  />,
+                  document.getElementById('loading_modal')
+                )
+              : null}
+
             <div className='col-12'>
-              <div class='col-12'>
-                <Link
-                  to={{
-                    pathname: '/new'
-                  }}
-                >
-                  <button class='btn btn-success'>Go to new dashboard</button>
-                </Link>
-              </div>
-
-              <div className='col-12'>
-                <div
-                  className='flex-wrap d-flex flex-row justify-content-between my-2'
-                  style={{ overflow: 'auto' }}
-                >
-                  <div class=' card d-flex flex-row flex-wrap align-items-center justify-content-between w-100 p-4'>
-                    {/* <div className='my-2 card d-flex flex-row justify-content-center align-items-center'> */}
-                    <p className='my-auto fw-bolder'>Expiration</p>
-                    <input
-                      type='number'
-                      value={monthInput}
-                      onChange={handleExpiration}
-                      className='mx-2 form-control my-auto '
-                      style={{ width: '100px' }}
-                    />
-                    {/* </div> */}
-                    {/* <div className='my-2 card d-flex flex-row mx-2 justify-content-between align-items-center'> */}
-                    <p className='my-auto mx-2 fw-bolder'>Strike</p>
-                    <div class='d-flex flex-column align-items-start p-3'>
-                      <label
-                        for='myinputRange'
-                        class='form-label mx-2 my-0 mt-2'
-                      >
-                        {strikeInput}
-                      </label>
-                      <MuiThemeProvider muiTheme={muiTheme}>
-                        <Slider
-                          aria-label='Strike'
-                          sx={{
-                            color: '#0f062b'
-                          }}
-                          value={strikeInput}
-                          onChange={handleStrikeChange}
-                          min={0}
-                          max={100}
-                          id='myinputRange'
-                          style={{ width: '100px' }}
-                        />
-                      </MuiThemeProvider>
-                      {/* <input
-                      type='range'
-                      id='myinputRange'
-                      className='mx-2 form-range w-75'
-                      value={strikeInput}
-                      onChange={handleStrikeChange}
-                      min={1}
-                      max={100}
-                    /> */}
-                    </div>
-                    {/* </div> */}
-                    {/* <div className='my-2 card d-flex flex-row justify-content-between align-items-center mx-2'> */}
-                    <p className='my-auto mx-2 fw-bolder'>Data Date</p>
-                    <input
-                      type='date'
-                      className='mx-2 form-control my-auto w-auto'
-                      value={date}
-                    />
-                    {/* </div> */}
-
-                    {/* <div className='my-2 d-flex flex-row justify-content-between align-items-center mx-2'> */}
-                    <button
-                      className='my_button my-auto w-auto'
-                      onClick={handleSubmit}
-                    >
-                      Submit
-                    </button>
-                  </div>
-                  {/* </div> */}
-                </div>
-              </div>
+              <Controls handleSubmit={handleSubmit} />
               {loading ? (
-                <div class=' d-flex justify-content-center align-items-center'>
+                <div class='d-flex justify-content-center align-items-center'>
                   <div class='spinner-border text-primary' role='status'>
                     <span class='visually-hidden'>Loading...</span>
                   </div>
                 </div>
-              ) : (
-                <Accordion defaultActiveKey='0'>
-                  <table className='table my-3 '>
-                    <thead>
-                      <tr>
-                        <th scope='col'>Company name</th>
-                        <th scope='col'>Call IR</th>
-                        <th scope='col'>Put IR</th>
-                        <th scope='col'>CP Ratio</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(companies).map(([key, value]) => {
-                        return (
-                          <React.Fragment>
-                            <tr>
-                              <td style={{ cursor: 'pointer' }}>
-                                <CustomToggle eventKey={key}>
-                                  {key}
-                                </CustomToggle>
-                              </td>
-                              <td>
-                                {value['total'][0]
-                                  ? value['total'][0].toFixed(2)
-                                  : '-'}
-                              </td>
-                              <td>
-                                {value['total'][1]
-                                  ? value['total'][1].toFixed(2)
-                                  : '-'}
-                              </td>
-                              <td>
-                                {value['total'][2]
-                                  ? value['total'][2].toFixed(2)
-                                  : '-'}
-                              </td>
-                            </tr>
-                            <tr className='py-0 m-0 acc_row'>
-                              <td className='py-0 m-0'>
-                                <Accordion.Collapse eventKey={key}>
-                                  <span>24</span>
-                                </Accordion.Collapse>
-                              </td>
-                              <td className='py-0 m-0'>
-                                <Accordion.Collapse eventKey={key}>
-                                  <span>
-                                    {value['24'][0]
-                                      ? value['24'][0].toFixed(2)
-                                      : '-'}
-                                  </span>
-                                </Accordion.Collapse>
-                              </td>
-                              <td className='py-0 m-0'>
-                                <Accordion.Collapse eventKey={key}>
-                                  <span>
-                                    {value['24'][1]
-                                      ? value['24'][1].toFixed(2)
-                                      : '-'}
-                                  </span>
-                                </Accordion.Collapse>
-                              </td>
-                              <td className='py-0 m-0'>
-                                <Accordion.Collapse eventKey={key}>
-                                  <span>
-                                    {value['24'][2]
-                                      ? value['24'][2].toFixed(2)
-                                      : '-'}
-                                  </span>
-                                </Accordion.Collapse>
-                              </td>
-                            </tr>
-                            <tr className='py-0 m-0 acc_row'>
-                              <td className='py-0 m-0'>
-                                <Accordion.Collapse eventKey={key}>
-                                  <span>59</span>
-                                </Accordion.Collapse>
-                              </td>
-                              <td className='py-0 m-0'>
-                                <Accordion.Collapse eventKey={key}>
-                                  <span>
-                                    {value['59'][0]
-                                      ? value['59'][0].toFixed(2)
-                                      : '-'}
-                                  </span>
-                                </Accordion.Collapse>
-                              </td>
-                              <td className='py-0 m-0'>
-                                <Accordion.Collapse eventKey={key}>
-                                  <span>
-                                    {value['59'][1]
-                                      ? value['59'][1].toFixed(2)
-                                      : '-'}
-                                  </span>
-                                </Accordion.Collapse>
-                              </td>
-                              <td className='py-0 m-0'>
-                                <Accordion.Collapse eventKey={key}>
-                                  <span>
-                                    {value['59'][2]
-                                      ? value['59'][2].toFixed(2)
-                                      : '-'}
-                                  </span>
-                                </Accordion.Collapse>
-                              </td>
-                            </tr>
-                          </React.Fragment>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </Accordion>
-              )}
+              ) : isDataLoaded != 0 ? (
+                <MainTable companies={companies} columns={columns} />
+              ) : null}
             </div>
           </div>
         </div>
